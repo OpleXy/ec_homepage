@@ -1,0 +1,44 @@
+npm install
+This is the current filestructure of TimeSculpt, react vite@latest:
+
+.
+..
+.gitignore
+README.md
+eslint.config.js
+index.html
+node_modules
+package-lock.json
+package.json
+public
+src
+structure_full.txt
+vite.config.js
+watch-structure.sh
+
+public
+└── vite.svg
+src
+├── App.css
+├── App.jsx
+├── assets
+│   └── react.svg
+├── components
+│   └── main.jsx
+├── index.css
+├── main.jsx
+└── styles
+    └── main.jsx
+
+3 directories, 7 files
+
+Line Counts Per File:
+68 src/index.css
+42 src/App.css
+35 src/App.jsx
+10 src/main.jsx
+0 src/styles/main.jsx
+0 src/components/main.jsx
+0 src/assets/react.svg
+0 public/vite.svg
+
