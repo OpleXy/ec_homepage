@@ -19,14 +19,14 @@ vite.config.js
 watch-structure.sh
 
 public
-└── vite.svg
+└── EC-hovedlogo.png
 src
 ├── App.css
 ├── App.jsx
 ├── assets
-│   └── react.svg
 ├── components
-│   └── main.jsx
+│   ├── main.jsx
+│   └── public.jsx
 ├── index.css
 ├── main.jsx
 └── styles
@@ -36,11 +36,11 @@ src
 
 Line Counts Per File:
 1333 src/components/main.jsx
+1327 src/components/public.jsx
 519 src/App.css
 476 src/styles/main.css
 282 src/index.css
-76 src/App.jsx
+156 public/EC-hovedlogo.png
+103 src/App.jsx
 9 src/main.jsx
-0 src/assets/react.svg
-0 public/vite.svg
 
