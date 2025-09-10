@@ -9,6 +9,8 @@ import {
   EventsListPage,
   EventDetailPage as AdminEventDetailPage,
   EventSignupPage,
+  ActivitiesPage,
+  UsersPage,
   NewsletterPage,
   ReportsPage,
   SettingsPage,
@@ -21,6 +23,7 @@ import {
   PublicLayout,
   HomePage,
   PublicEventsPage,
+  PublicActivitiesPage,
   PublicEventDetailPage,
   AboutPage,
   ContactPage
@@ -46,6 +49,12 @@ const AdminRoutes = () => {
         <Route path="/arrangementer" element={<EventsListPage />} />
         <Route path="/arrangementer/:id" element={<AdminEventDetailPage />} />
         <Route path="/arrangementer/:id/pamelding" element={<EventSignupPage />} />
+        <Route path="/aktiviteter" element={<ActivitiesPage />} />
+        <Route path="/brukere" element={
+          <RequireRole roles={['admin']}>
+            <UsersPage />
+          </RequireRole>
+        } />
         <Route path="/nyhetsbrev" element={
           <RequireRole roles={['editor', 'admin']}>
             <NewsletterPage />
@@ -89,6 +98,7 @@ const App = () => {
             <Route path="arrangementer" element={<PublicEventsPage />} />
             <Route path="arrangementer/:id" element={<PublicEventDetailPage />} />
             <Route path="arrangementer/:id/pamelding" element={<EventSignupPage />} />
+            <Route path="aktiviteter" element={<PublicActivitiesPage />} />
             <Route path="om-oss" element={<AboutPage />} />
             <Route path="kontakt" element={<ContactPage />} />
           </Route>

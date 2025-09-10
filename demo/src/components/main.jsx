@@ -23,8 +23,18 @@ import {
   CheckCircle,
   AlertCircle,
   Menu,
-  X
+  X,
+  Activity
 } from 'lucide-react';
+
+// Import admin components
+import AdminDashboard from './AdminDashboard.jsx';
+import AdminEvents from './AdminEvents.jsx';
+import AdminActivities from './AdminActivities.jsx';
+import AdminUsers from './AdminUsers.jsx';
+import AdminNewsletter from './AdminNewsletter.jsx';
+import AdminReports from './AdminReports.jsx';
+import AdminSettings from './AdminSettings.jsx';
 
 // Zustand Stores
 export const useAuthStore = create(
@@ -92,6 +102,53 @@ const dataStore = {
       ],
       createdAt: '2025-01-02T10:00:00Z',
       updatedAt: '2025-01-02T10:00:00Z'
+    }
+  ],
+  activities: [
+    {
+      id: 'act_1',
+      title: 'Morgenyoga',
+      description: 'Start dagen med rolig yoga og meditasjon',
+      category: 'Helse & Velvære',
+      image: '/api/placeholder/300/200',
+      duration: '60 minutter',
+      level: 'Alle nivåer',
+      instructor: 'Kari Nordmann',
+      schedule: 'Mandag, Onsdag, Fredag 07:00-08:00',
+      location: 'Yoga Studio Nord',
+      status: 'active',
+      createdAt: '2025-01-01T10:00:00Z',
+      updatedAt: '2025-01-01T10:00:00Z'
+    },
+    {
+      id: 'act_2',
+      title: 'Bokklubb',
+      description: 'Månedlig bokklubb hvor vi diskuterer moderne litteratur',
+      category: 'Kultur',
+      image: '/api/placeholder/300/200',
+      duration: '2 timer',
+      level: 'Alle',
+      instructor: 'Lars Eriksen',
+      schedule: 'Første torsdag i måneden 19:00-21:00',
+      location: 'Biblioteket',
+      status: 'active',
+      createdAt: '2025-01-01T11:00:00Z',
+      updatedAt: '2025-01-01T11:00:00Z'
+    },
+    {
+      id: 'act_3',
+      title: 'Programmering for nybegynnere',
+      description: 'Lær grunnleggende programmering med Python',
+      category: 'Teknologi',
+      image: '/api/placeholder/300/200',
+      duration: '3 timer',
+      level: 'Nybegynner',
+      instructor: 'Tech Expert AS',
+      schedule: 'Lørdag 10:00-13:00',
+      location: 'IT-senteret',
+      status: 'active',
+      createdAt: '2025-01-01T12:00:00Z',
+      updatedAt: '2025-01-01T12:00:00Z'
     }
   ]
 };
@@ -260,6 +317,101 @@ export const api = {
         }
       ];
     }
+  },
+  activities: {
+    // Get all activities
+    getAll: async (params = {}) => {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      let filteredActivities = [...dataStore.activities];
+      
+      // Apply search filter
+      if (params.search) {
+        const searchLower = params.search.toLowerCase();
+        filteredActivities = filteredActivities.filter(activity => 
+          activity.title.toLowerCase().includes(searchLower) ||
+          activity.description.toLowerCase().includes(searchLower) ||
+          activity.category.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Apply category filter
+      if (params.category) {
+        filteredActivities = filteredActivities.filter(activity => 
+          activity.category === params.category
+        );
+      }
+      
+      // Apply status filter
+      if (params.status) {
+        filteredActivities = filteredActivities.filter(activity => 
+          activity.status === params.status
+        );
+      }
+      
+      // Apply limit
+      if (params.limit) {
+        filteredActivities = filteredActivities.slice(0, params.limit);
+      }
+      
+      return {
+        items: filteredActivities,
+        total: filteredActivities.length
+      };
+    },
+    
+    // Get single activity
+    getById: async (id) => {
+      await new Promise(resolve => setTimeout(resolve, 400));
+      const activity = dataStore.activities.find(a => a.id === id);
+      if (!activity) {
+        throw new Error('Activity not found');
+      }
+      return activity;
+    },
+    
+    // Create new activity (admin only)
+    create: async (activityData) => {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      const newActivity = {
+        id: `act_${Date.now()}`,
+        ...activityData,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      dataStore.activities.push(newActivity);
+      return newActivity;
+    },
+    
+    // Update activity (admin only)
+    update: async (id, activityData) => {
+      await new Promise(resolve => setTimeout(resolve, 700));
+      const activityIndex = dataStore.activities.findIndex(a => a.id === id);
+      if (activityIndex === -1) {
+        throw new Error('Activity not found');
+      }
+      
+      dataStore.activities[activityIndex] = {
+        ...dataStore.activities[activityIndex],
+        ...activityData,
+        updatedAt: new Date().toISOString()
+      };
+      
+      return dataStore.activities[activityIndex];
+    },
+    
+    // Delete activity (admin only)
+    delete: async (id) => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const activityIndex = dataStore.activities.findIndex(a => a.id === id);
+      if (activityIndex === -1) {
+        throw new Error('Activity not found');
+      }
+      
+      const deletedActivity = dataStore.activities[activityIndex];
+      dataStore.activities.splice(activityIndex, 1);
+      return deletedActivity;
+    }
   }
 };
 
@@ -424,6 +576,10 @@ export const AppShell = ({ children }) => {
         <nav className="flex-1 p-4">
           <NavLink to="/" icon={LayoutDashboard} label="Dashboard" collapsed={!sidebarOpen} />
           <NavLink to="/arrangementer" icon={CalendarDays} label="Arrangementer" collapsed={!sidebarOpen} />
+          <NavLink to="/aktiviteter" icon={Activity} label="Aktiviteter" collapsed={!sidebarOpen} />
+          {user?.role === 'admin' && (
+            <NavLink to="/brukere" icon={Users} label="Brukere" collapsed={!sidebarOpen} />
+          )}
           <NavLink to="/nyhetsbrev" icon={Mail} label="Nyhetsbrev" collapsed={!sidebarOpen} />
           <NavLink to="/rapportering" icon={BarChart3} label="Rapportering" collapsed={!sidebarOpen} />
           {user?.role === 'admin' && (
@@ -583,585 +739,7 @@ export const LoginPage = () => {
   );
 };
 
-export const DashboardPage = () => {
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['dashboard-stats'],
-    queryFn: api.dashboard.getStats
-  });
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent>
-                <div className="h-16 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-      
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">Totale kontakter</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.totalContacts?.toLocaleString()}</p>
-              </div>
-              <Users className="h-8 w-8 text-indigo-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">Kommende arrangementer</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.upcomingEvents}</p>
-              </div>
-              <CalendarDays className="h-8 w-8 text-indigo-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">Åpningsrate nyhetsbrev</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.newsletterStats?.openRate}%</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600">Nyhetsbrev sendt</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.newsletterStats?.sent?.toLocaleString()}</p>
-              </div>
-              <Mail className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Påmeldinger siste 7 dager</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {stats?.signupsData?.map((item, index) => (
-                <div key={index} className="flex justify-between items-center py-2">
-                  <span className="text-sm text-gray-600">
-                    {new Date(item.date).toLocaleDateString('nb-NO', { weekday: 'short', day: 'numeric', month: 'short' })}
-                  </span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-16 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-indigo-600 h-2 rounded-full" 
-                        style={{ width: `${(item.signups / Math.max(...stats.signupsData.map(d => d.signups))) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 w-8 text-right">{item.signups}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Nyhetsbrev statistikk</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Sendt</span>
-                <span className="text-lg font-semibold">{stats?.newsletterStats?.sent?.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Åpningsrate</span>
-                <span className="text-lg font-semibold text-green-600">{stats?.newsletterStats?.openRate}%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Klikkrate</span>
-                <span className="text-lg font-semibold text-blue-600">{stats?.newsletterStats?.clickRate}%</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-};
-
-export const EventsListPage = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingEvent, setEditingEvent] = useState(null);
-  
-  const queryClient = useQueryClient();
-  const { data: eventsData, isLoading } = useQuery({
-    queryKey: ['events', searchTerm],
-    queryFn: () => api.events.getAll({ search: searchTerm })
-  });
-
-  const { user } = useAuthStore();
-  const canEdit = user?.role === 'admin' || user?.role === 'editor';
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: api.events.delete,
-    onSuccess: () => {
-      // Invalidate all event-related queries to update both admin and public views
-      queryClient.invalidateQueries({ queryKey: ['events'] });
-      queryClient.invalidateQueries({ queryKey: ['upcoming-events'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-    }
-  });
-
-  const handleDelete = async (eventId) => {
-    if (window.confirm('Er du sikker på at du vil slette dette arrangementet?')) {
-      try {
-        await deleteMutation.mutateAsync(eventId);
-      } catch (error) {
-        console.error('Failed to delete event:', error);
-      }
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Arrangementer</h1>
-        </div>
-        <div className="animate-pulse space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-16 bg-gray-200 rounded-lg"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Arrangementer</h1>
-        {canEdit && (
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nytt arrangement
-          </Button>
-        )}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Søk arrangementer..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button variant="outline">
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tittel
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Dato
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Sted
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Påmeldte
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Handlinger
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {eventsData?.items?.map((event) => (
-                  <tr key={event.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div>
-                        <Link 
-                          to={`/arrangementer/${event.id}`}
-                          className="text-sm font-medium text-indigo-600 hover:text-indigo-900"
-                        >
-                          {event.title}
-                        </Link>
-                        <p className="text-sm text-gray-500">{event.category}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {new Date(event.startAt).toLocaleDateString('nb-NO')}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {new Date(event.startAt).toLocaleTimeString('nb-NO', { 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{event.location.venue}</div>
-                      <div className="text-sm text-gray-500">{event.location.city}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant={event.status === 'open' ? 'success' : 'default'}>
-                        {event.status === 'open' ? 'Åpen' : 'Stengt'}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {event.registrations}/{event.capacity}
-                      </div>
-                      <div className="w-16 bg-gray-200 rounded-full h-2 mt-1">
-                        <div 
-                          className="bg-indigo-600 h-2 rounded-full" 
-                          style={{ width: `${(event.registrations / event.capacity) * 100}%` }}
-                        ></div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        {canEdit && (
-                          <>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => setEditingEvent(event)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleDelete(event.id)}
-                              disabled={deleteMutation.isPending}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Create/Edit Event Modal */}
-      {(showCreateModal || editingEvent) && (
-        <EventModal
-          event={editingEvent}
-          isOpen={showCreateModal || !!editingEvent}
-          onClose={() => {
-            setShowCreateModal(false);
-            setEditingEvent(null);
-          }}
-          onSave={() => {
-            // Invalidate queries to refresh both admin and public views
-            queryClient.invalidateQueries({ queryKey: ['events'] });
-            queryClient.invalidateQueries({ queryKey: ['upcoming-events'] });
-            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-          }}
-        />
-      )}
-    </div>
-  );
-};
-
-// Event Create/Edit Modal Component
-const EventModal = ({ event, isOpen, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    startAt: '',
-    endAt: '',
-    location: {
-      venue: '',
-      address: '',
-      city: '',
-      country: 'NO'
-    },
-    capacity: 100,
-    category: 'Seminar',
-    status: 'open',
-    ticketTypes: [
-      { name: 'Standard', price: 0, currency: 'NOK' }
-    ]
-  });
-
-  const createMutation = useMutation({
-    mutationFn: api.events.create,
-    onSuccess: () => {
-      onSave();
-      onClose();
-    }
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }) => api.events.update(id, data),
-    onSuccess: () => {
-      onSave();
-      onClose();
-    }
-  });
-
-  // Initialize form with event data when editing
-  useEffect(() => {
-    if (event) {
-      setFormData({
-        title: event.title || '',
-        description: event.description || '',
-        startAt: event.startAt ? event.startAt.slice(0, 16) : '',
-        endAt: event.endAt ? event.endAt.slice(0, 16) : '',
-        location: {
-          venue: event.location?.venue || '',
-          address: event.location?.address || '',
-          city: event.location?.city || '',
-          country: event.location?.country || 'NO'
-        },
-        capacity: event.capacity || 100,
-        category: event.category || 'Seminar',
-        status: event.status || 'open',
-        ticketTypes: event.ticketTypes || [
-          { name: 'Standard', price: 0, currency: 'NOK' }
-        ]
-      });
-    }
-  }, [event]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    const eventData = {
-      ...formData,
-      startAt: new Date(formData.startAt).toISOString(),
-      endAt: new Date(formData.endAt).toISOString(),
-      capacity: parseInt(formData.capacity)
-    };
-
-    try {
-      if (event) {
-        await updateMutation.mutateAsync({ id: event.id, ...eventData });
-      } else {
-        await createMutation.mutateAsync(eventData);
-      }
-    } catch (error) {
-      console.error('Failed to save event:', error);
-    }
-  };
-
-  const handleInputChange = (field, value) => {
-    if (field.startsWith('location.')) {
-      const locationField = field.split('.')[1];
-      setFormData(prev => ({
-        ...prev,
-        location: {
-          ...prev.location,
-          [locationField]: value
-        }
-      }));
-    } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">
-            {event ? 'Rediger arrangement' : 'Nytt arrangement'}
-          </h2>
-          <Button variant="ghost" onClick={onClose}>
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="title">Tittel *</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="description">Beskrivelse *</Label>
-            <textarea
-              id="description"
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="startAt">Start *</Label>
-              <Input
-                id="startAt"
-                type="datetime-local"
-                value={formData.startAt}
-                onChange={(e) => handleInputChange('startAt', e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="endAt">Slutt *</Label>
-              <Input
-                id="endAt"
-                type="datetime-local"
-                value={formData.endAt}
-                onChange={(e) => handleInputChange('endAt', e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="venue">Sted *</Label>
-              <Input
-                id="venue"
-                value={formData.location.venue}
-                onChange={(e) => handleInputChange('location.venue', e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="city">By *</Label>
-              <Input
-                id="city"
-                value={formData.location.city}
-                onChange={(e) => handleInputChange('location.city', e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="address">Adresse</Label>
-            <Input
-              id="address"
-              value={formData.location.address}
-              onChange={(e) => handleInputChange('location.address', e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="capacity">Kapasitet *</Label>
-              <Input
-                id="capacity"
-                type="number"
-                min="1"
-                value={formData.capacity}
-                onChange={(e) => handleInputChange('capacity', e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="category">Kategori *</Label>
-              <select
-                id="category"
-                className="w-full h-10 px-3 border border-gray-300 rounded-md"
-                value={formData.category}
-                onChange={(e) => handleInputChange('category', e.target.value)}
-              >
-                <option value="Seminar">Seminar</option>
-                <option value="Konferanse">Konferanse</option>
-                <option value="Workshop">Workshop</option>
-                <option value="Nettverksarrangement">Nettverksarrangement</option>
-                <option value="Kurs">Kurs</option>
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="status">Status *</Label>
-              <select
-                id="status"
-                className="w-full h-10 px-3 border border-gray-300 rounded-md"
-                value={formData.status}
-                onChange={(e) => handleInputChange('status', e.target.value)}
-              >
-                <option value="open">Åpen</option>
-                <option value="closed">Stengt</option>
-                <option value="cancelled">Avlyst</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Avbryt
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
-              {createMutation.isPending || updateMutation.isPending ? 'Lagrer...' : 'Lagre'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
 
 export const EventDetailPage = () => {
   const { id } = useParams();
@@ -1457,263 +1035,8 @@ export const EventSignupPage = () => {
   );
 };
 
-export const NewsletterPage = () => {
-  const { user } = useAuthStore();
-  const canEdit = user?.role === 'admin' || user?.role === 'editor';
-  
-  const { data: campaigns, isLoading } = useQuery({
-    queryKey: ['newsletter-campaigns'],
-    queryFn: api.newsletter.getCampaigns
-  });
 
-  if (!canEdit) {
-    return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900">Ikke tilgang</h1>
-        <p className="text-gray-600 mt-2">Du har ikke tilgang til denne siden.</p>
-      </div>
-    );
-  }
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Nyhetsbrev</h1>
-        <div className="animate-pulse space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-16 bg-gray-200 rounded-lg"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Nyhetsbrev</h1>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Ny kampanje
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Kampanjer</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Kampanje
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Planlagt
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                        Handlinger
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {campaigns?.map((campaign) => (
-                      <tr key={campaign.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div>
-                            <p className="font-medium text-gray-900">{campaign.name}</p>
-                            <p className="text-sm text-gray-500">{campaign.subject}</p>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge variant={
-                            campaign.status === 'sent' ? 'success' :
-                            campaign.status === 'draft' ? 'default' :
-                            'warning'
-                          }>
-                            {campaign.status === 'sent' ? 'Sendt' :
-                             campaign.status === 'draft' ? 'Utkast' :
-                             'Planlagt'}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {campaign.scheduledAt ? 
-                            new Date(campaign.scheduledAt).toLocaleString('nb-NO') : 
-                            '-'
-                          }
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Button variant="ghost" size="sm">
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            {campaign.status === 'draft' && (
-                              <Button variant="outline" size="sm">
-                                Send
-                              </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Hurtighandlinger</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
-                <Users className="w-4 h-4 mr-2" />
-                Administrer lister
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Mail className="w-4 h-4 mr-2" />
-                Nye maler
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Se statistikk
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export const ReportsPage = () => {
-  const { user } = useAuthStore();
-  const canView = user?.role === 'admin' || user?.role === 'editor';
-
-  if (!canView) {
-    return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900">Ikke tilgang</h1>
-        <p className="text-gray-600 mt-2">Du har ikke tilgang til denne siden.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Rapportering</h1>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Påmeldinger per arrangement</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              Last ned rapport (CSV)
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Nyhetsbrev KPI</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              Last ned rapport (XLSX)
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-};
-
-export const SettingsPage = () => {
-  const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState('users');
-
-  if (user?.role !== 'admin') {
-    return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900">Ikke tilgang</h1>
-        <p className="text-gray-600 mt-2">Du har ikke tilgang til denne siden.</p>
-      </div>
-    );
-  }
-
-  const tabs = [
-    { id: 'users', label: 'Brukere & roller' },
-    { id: 'integrations', label: 'Integrasjoner' },
-    { id: 'branding', label: 'Branding' },
-    { id: 'api', label: 'API-tilkobling' }
-  ];
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Innstillinger</h1>
-      
-      <Card>
-        <CardHeader>
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          {activeTab === 'users' && (
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Brukeradministrasjon</h3>
-              <p className="text-gray-600">Administrer brukere og deres roller i systemet.</p>
-            </div>
-          )}
-          {activeTab === 'integrations' && (
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Integrasjoner</h3>
-              <p className="text-gray-600">Konfigurer integrasjoner med eksterne tjenester.</p>
-            </div>
-          )}
-          {activeTab === 'branding' && (
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Branding</h3>
-              <p className="text-gray-600">Tilpass utseende og merkevare for systemet.</p>
-            </div>
-          )}
-          {activeTab === 'api' && (
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">API-tilkobling</h3>
-              <p className="text-gray-600">Konfigurer API-innstillinger og nøkler.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
 
 export const NotFoundPage = () => (
   <div className="text-center py-12">
@@ -1724,3 +1047,12 @@ export const NotFoundPage = () => (
     </Link>
   </div>
 );
+
+// Override admin components with separate files
+export { default as DashboardPage } from './AdminDashboard.jsx';
+export { default as EventsListPage } from './AdminEvents.jsx';
+export { default as ActivitiesPage } from './AdminActivities.jsx';
+export { default as UsersPage } from './AdminUsers.jsx';
+export { default as NewsletterPage } from './AdminNewsletter.jsx';
+export { default as ReportsPage } from './AdminReports.jsx';
+export { default as SettingsPage } from './AdminSettings.jsx';

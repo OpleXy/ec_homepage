@@ -18,6 +18,7 @@ import {
   Twitter,
   Instagram,
   Linkedin,
+  Activity,
   Search
 } from 'lucide-react';
 import { 
@@ -111,17 +112,6 @@ export const PublicHeader = () => {
               {/* Search Bar - Mobile */}
               <div className="p-4 border-b border-gray-200">
                 <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Skriv søkeord her"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <Search className="w-5 h-5" />
-                  </button>
                 </div>
               </div>
 
@@ -340,6 +330,11 @@ export const HomePage = () => {
     queryFn: () => api.events.getAll({ limit: 6 })
   });
 
+  const { data: activitiesData } = useQuery({
+    queryKey: ['activities'],
+    queryFn: () => api.activities.getAll({ limit: 6, status: 'active' })
+  });
+
   const { data: newsData } = useQuery({
     queryKey: ['latest-news'],
     queryFn: () => api.events.getAll({ limit: 4 }) // Mock news data
@@ -407,51 +402,50 @@ export const HomePage = () => {
             </div>
             
             <div className="p-6">
-              <div className="space-y-4">
-                {upcomingEvents?.items?.slice(0, 6).map((event) => (
-                  <div key={event.id} className="flex space-x-4 py-3 border-b border-gray-100 last:border-b-0">
-                    <div className="flex-shrink-0 w-20 text-center">
-                      <Link to={`/arrangementer/${event.id}`} className="no-underline">
-                        <p className="font-bold text-sm text-gray-900">
-                          {new Date(event.startAt).toLocaleDateString('nb-NO', { 
-                            day: 'numeric', 
-                            month: 'short' 
-                          }).toUpperCase()}
+              {activitiesData?.items && activitiesData.items.length > 0 ? (
+                <div className="space-y-4">
+                  {activitiesData.items.map((activity) => (
+                    <div key={activity.id} className="flex space-x-4 py-3 border-b border-gray-100 last:border-b-0">
+                      <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center">
+                        <Activity className="w-6 h-6 text-indigo-600" />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 hover:text-indigo-600 transition-colors">
+                          {activity.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {activity.description}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(event.startAt).toLocaleTimeString('nb-NO', { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })} - {new Date(event.endAt).toLocaleTimeString('nb-NO', { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
-                        </p>
-                      </Link>
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <Link to={`/arrangementer/${event.id}`} className="no-underline">
-                        <p className="font-medium text-gray-900 hover:text-indigo-600 transition-colors">
-                          {event.title}
-                        </p>
-                        <div className="flex items-center space-x-4 mt-1">
+                        <div className="flex items-center space-x-4 mt-2">
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                            {event.category}
+                            {activity.category}
+                          </span>
+                          <span className="flex items-center text-xs text-gray-500">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {activity.duration}
                           </span>
                           <span className="flex items-center text-xs text-gray-500">
                             <MapPin className="w-3 h-3 mr-1" />
-                            {event.location.venue}
+                            {activity.location}
                           </span>
                         </div>
-                      </Link>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {activity.schedule}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Activity className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>Ingen aktiviteter tilgjengelig for øyeblikket.</p>
+                </div>
+              )}
               
               <div className="mt-6 pt-4 border-t border-gray-200">
-                <Link to="/arrangementer">
+                <Link to="/aktiviteter">
                   <Button variant="outline" className="w-full">
                     Se alle aktiviteter
                   </Button>
@@ -602,6 +596,149 @@ export const HomePage = () => {
           </Link>
         </div>
       </section>
+    </div>
+  );
+};
+
+// Public Activities Page
+export const PublicActivitiesPage = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+
+  const { data: activitiesData, isLoading } = useQuery({
+    queryKey: ['activities', searchTerm, categoryFilter],
+    queryFn: () => api.activities.getAll({ 
+      search: searchTerm, 
+      category: categoryFilter,
+      status: 'active'
+    })
+  });
+
+  const categories = ['Helse & Velvære', 'Kultur', 'Teknologi', 'Sport', 'Utdanning', 'Sosialt'];
+
+  if (isLoading) {
+    return (
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center mb-12">
+          <div className="h-10 bg-gray-200 rounded w-64 mx-auto mb-4 animate-pulse"></div>
+          <div className="h-6 bg-gray-200 rounded w-96 mx-auto animate-pulse"></div>
+        </div>
+        <div className="grid gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-white rounded-lg shadow-sm p-6 animate-pulse">
+              <div className="h-24 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-12">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          Våre aktiviteter
+        </h1>
+        <p className="text-lg text-gray-600">
+          Oppdag spennende aktiviteter og bli en del av fellesskapet
+        </p>
+      </div>
+
+      {/* Search and Filter */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Søk aktiviteter..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="sm:w-48">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="">Alle kategorier</option>
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Activities Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {activitiesData?.items?.map((activity) => (
+          <div key={activity.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+            <div className="h-48 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+              <Activity className="w-16 h-16 text-indigo-600" />
+            </div>
+            
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-3">
+                <Badge className="bg-indigo-100 text-indigo-800">
+                  {activity.category}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {activity.level}
+                </Badge>
+              </div>
+              
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {activity.title}
+              </h3>
+              
+              <p className="text-gray-600 mb-4 line-clamp-2">
+                {activity.description}
+              </p>
+              
+              <div className="space-y-2 text-sm text-gray-500">
+                <div className="flex items-center">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span>{activity.duration}</span>
+                </div>
+                <div className="flex items-center">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  <span>{activity.location}</span>
+                </div>
+                <div className="flex items-center">
+                  <User className="w-4 h-4 mr-2" />
+                  <span>{activity.instructor}</span>
+                </div>
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className="text-sm font-medium text-gray-700 mb-2">Tidspunkt:</p>
+                <p className="text-sm text-gray-600">{activity.schedule}</p>
+              </div>
+              
+              <div className="mt-6">
+                <Button className="w-full">
+                  Få mer informasjon
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {activitiesData?.items?.length === 0 && (
+        <div className="text-center py-12">
+          <Activity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Ingen aktiviteter funnet</h3>
+          <p className="text-gray-600">
+            {searchTerm || categoryFilter 
+              ? 'Prøv å justere søkekriteriene dine.'
+              : 'Det er ingen aktiviteter tilgjengelig for øyeblikket.'
+            }
+          </p>
+        </div>
+      )}
     </div>
   );
 };

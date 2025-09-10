@@ -6,6 +6,7 @@ This is the current filestructure of TimeSculpt, react vite@latest:
 .gitignore
 CLAUDE.md
 README.md
+dist
 eslint.config.js
 index.html
 node_modules
@@ -26,6 +27,13 @@ src
 ├── App.jsx
 ├── assets
 ├── components
+│   ├── AdminActivities.jsx
+│   ├── AdminDashboard.jsx
+│   ├── AdminEvents.jsx
+│   ├── AdminNewsletter.jsx
+│   ├── AdminReports.jsx
+│   ├── AdminSettings.jsx
+│   ├── AdminUsers.jsx
 │   ├── main.jsx
 │   └── public.jsx
 ├── index.css
@@ -33,15 +41,22 @@ src
 └── styles
     └── main.css
 
-3 directories, 7 files
+3 directories, 14 files
 
 Line Counts Per File:
-1725 src/components/main.jsx
-1317 src/components/public.jsx
+1454 src/components/public.jsx
+1057 src/components/main.jsx
+710 src/components/AdminUsers.jsx
+686 src/components/AdminSettings.jsx
+581 src/components/AdminEvents.jsx
+561 src/components/AdminReports.jsx
+524 src/components/AdminNewsletter.jsx
 519 src/App.css
+488 src/components/AdminActivities.jsx
 481 src/styles/main.css
 282 src/index.css
+238 src/components/AdminDashboard.jsx
 156 public/EC-hovedlogo.png
-103 src/App.jsx
+113 src/App.jsx
 9 src/main.jsx
 
