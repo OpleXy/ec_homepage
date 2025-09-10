@@ -3,6 +3,7 @@ This is the current filestructure of TimeSculpt, react vite@latest:
 
 .
 ..
+.env
 .gitignore
 CLAUDE.md
 README.md
