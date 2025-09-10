@@ -10,9 +10,11 @@ index.html
 node_modules
 package-lock.json
 package.json
+postcss.config.js
 public
 src
 structure_full.txt
+tailwind.config.js
 vite.config.js
 watch-structure.sh
 
@@ -28,17 +30,17 @@ src
 ├── index.css
 ├── main.jsx
 └── styles
-    └── main.jsx
+    └── main.css
 
 3 directories, 7 files
 
 Line Counts Per File:
-68 src/index.css
-42 src/App.css
-35 src/App.jsx
-10 src/main.jsx
-0 src/styles/main.jsx
-0 src/components/main.jsx
+1333 src/components/main.jsx
+519 src/App.css
+476 src/styles/main.css
+282 src/index.css
+76 src/App.jsx
+9 src/main.jsx
 0 src/assets/react.svg
 0 public/vite.svg
 
