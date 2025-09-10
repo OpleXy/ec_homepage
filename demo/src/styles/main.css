@@ -443,6 +443,11 @@
   animation: fadeIn 0.2s ease-out;
 }
 
+/* Mobile navigation animation */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
 /* Focus and accessibility improvements */
 .crm-focus-visible:focus-visible {
   @apply outline-none ring-2 ring-indigo-500 ring-offset-2;

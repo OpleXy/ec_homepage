@@ -38,6 +38,20 @@ export const PublicHeader = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isAuthenticated, user } = useAuthStore();
 
+  // Toggle body class when mobile menu state changes
+  React.useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.classList.add('mob-nav-active');
+    } else {
+      document.body.classList.remove('mob-nav-active');
+    }
+
+    // Cleanup on component unmount
+    return () => {
+      document.body.classList.remove('mob-nav-active');
+    };
+  }, [mobileMenuOpen]);
+
   return (
     <>
       <header className="bg-white shadow-sm border-b border-gray-200">
@@ -89,34 +103,10 @@ export const PublicHeader = () => {
         </div>
       </header>
 
-      {/* Mobile Navigation Overlay - Full Screen */}
+      {/* Mobile Navigation Menu - Below Header */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50">
-          {/* Background overlay */}
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50"
-            onClick={() => setMobileMenuOpen(false)}
-          ></div>
-          
-          {/* Mobile menu - Full Width */}
-          <div className="fixed inset-0 bg-white">
-            <div className="flex flex-col h-full">
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                <div className="flex items-center">
-                  <img 
-                    src="/EC-hovedlogo.png" 
-                    alt="EventHub logo" 
-                    className="h-8 w-auto"
-                  />
-                </div>
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+        <div className="fixed inset-x-0 top-16 bottom-0 z-50 bg-white animate-fade-in">
+          <div>
 
               {/* Search Bar - Mobile */}
               <div className="p-4 border-b border-gray-200">
@@ -257,7 +247,7 @@ export const PublicHeader = () => {
               </div>
             </div>
           </div>
-        </div>
+
       )}
     </>
   );
