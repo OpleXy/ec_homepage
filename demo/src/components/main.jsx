@@ -49,7 +49,54 @@ export const useUIStore = create((set) => ({
   toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
 }));
 
-// Mock API functions
+// Global data store (simulates database)
+const dataStore = {
+  events: [
+    {
+      id: 'evt_1',
+      title: 'Sommerseminar 2025',
+      description: 'Et fantastisk seminar om teknologi og innovasjon',
+      startAt: '2025-06-12T09:00:00Z',
+      endAt: '2025-06-12T15:00:00Z',
+      location: { venue: 'Kulturhuset', address: 'Youngstorget 3', city: 'Oslo', country: 'NO' },
+      status: 'open',
+      capacity: 150,
+      registrations: 47,
+      category: 'Seminar',
+      ticketTypes: [
+        { id: 'std', name: 'Standard', price: 0, currency: 'NOK', capacity: 150 }
+      ],
+      speakers: [
+        { id: '1', name: 'Dr. Anna Hansen', bio: 'Teknologiekspert og forsker' },
+        { id: '2', name: 'Lars Olsen', bio: 'Innovasjonsleder i startup-miljøet' }
+      ],
+      createdAt: '2025-01-01T10:00:00Z',
+      updatedAt: '2025-01-01T10:00:00Z'
+    },
+    {
+      id: 'evt_2',
+      title: 'Høstkonferanse',
+      description: 'Årlig konferanse for bransjens ledere',
+      startAt: '2025-09-15T08:00:00Z',
+      endAt: '2025-09-16T17:00:00Z',
+      location: { venue: 'Radisson Blu', address: 'Strandkaien 7', city: 'Bergen', country: 'NO' },
+      status: 'open',
+      capacity: 200,
+      registrations: 89,
+      category: 'Konferanse',
+      ticketTypes: [
+        { id: 'std', name: 'Standard', price: 500, currency: 'NOK', capacity: 200 }
+      ],
+      speakers: [
+        { id: '3', name: 'Maria Svendsen', bio: 'Lederskap og strategi ekspert' }
+      ],
+      createdAt: '2025-01-02T10:00:00Z',
+      updatedAt: '2025-01-02T10:00:00Z'
+    }
+  ]
+};
+
+// Mock API functions with admin/public separation
 export const api = {
   auth: {
     login: async (credentials) => {
@@ -64,62 +111,103 @@ export const api = {
     }
   },
   events: {
+    // Public/Admin: Get all events
     getAll: async (params = {}) => {
       await new Promise(resolve => setTimeout(resolve, 800));
+      let filteredEvents = [...dataStore.events];
+      
+      // Apply search filter
+      if (params.search) {
+        const searchLower = params.search.toLowerCase();
+        filteredEvents = filteredEvents.filter(event => 
+          event.title.toLowerCase().includes(searchLower) ||
+          event.description.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Apply category filter
+      if (params.category) {
+        filteredEvents = filteredEvents.filter(event => 
+          event.category === params.category
+        );
+      }
+      
+      // Apply limit
+      if (params.limit) {
+        filteredEvents = filteredEvents.slice(0, params.limit);
+      }
+      
       return {
-        items: [
-          {
-            id: 'evt_1',
-            title: 'Sommerseminar 2025',
-            description: 'Et fantastisk seminar om teknologi og innovasjon',
-            startAt: '2025-06-12T09:00:00Z',
-            endAt: '2025-06-12T15:00:00Z',
-            location: { venue: 'Kulturhuset', city: 'Oslo', country: 'NO' },
-            status: 'open',
-            capacity: 150,
-            registrations: 47,
-            category: 'Seminar'
-          },
-          {
-            id: 'evt_2',
-            title: 'Høstkonferanse',
-            description: 'Årlig konferanse for bransjens ledere',
-            startAt: '2025-09-15T08:00:00Z',
-            endAt: '2025-09-16T17:00:00Z',
-            location: { venue: 'Radisson Blu', city: 'Bergen', country: 'NO' },
-            status: 'open',
-            capacity: 200,
-            registrations: 89,
-            category: 'Konferanse'
-          }
-        ],
-        total: 2
+        items: filteredEvents,
+        total: filteredEvents.length
       };
     },
+    
+    // Public/Admin: Get single event
     getById: async (id) => {
       await new Promise(resolve => setTimeout(resolve, 600));
-      return {
-        id,
-        title: 'Sommerseminar 2025',
-        description: 'Et fantastisk seminar om teknologi og innovasjon med kjente foredragsholdere fra hele Norden.',
-        startAt: '2025-06-12T09:00:00Z',
-        endAt: '2025-06-12T15:00:00Z',
-        location: { venue: 'Kulturhuset', address: 'Youngstorget 3', city: 'Oslo', country: 'NO' },
-        status: 'open',
-        capacity: 150,
-        registrations: 47,
-        category: 'Seminar',
-        ticketTypes: [
-          { id: 'std', name: 'Standard', price: 0, currency: 'NOK', capacity: 150 }
-        ],
-        speakers: [
-          { id: '1', name: 'Dr. Anna Hansen', bio: 'Teknologiekspert og forsker' },
-          { id: '2', name: 'Lars Olsen', bio: 'Innovasjonsleder i startup-miljøet' }
-        ]
-      };
+      const event = dataStore.events.find(e => e.id === id);
+      if (!event) {
+        throw new Error('Event not found');
+      }
+      return event;
     },
+    
+    // Admin only: Create event
+    create: async (eventData) => {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const newEvent = {
+        id: 'evt_' + Math.random().toString(36).substr(2, 9),
+        ...eventData,
+        registrations: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      dataStore.events.push(newEvent);
+      return newEvent;
+    },
+    
+    // Admin only: Update event
+    update: async (id, eventData) => {
+      await new Promise(resolve => setTimeout(resolve, 900));
+      const eventIndex = dataStore.events.findIndex(e => e.id === id);
+      if (eventIndex === -1) {
+        throw new Error('Event not found');
+      }
+      
+      dataStore.events[eventIndex] = {
+        ...dataStore.events[eventIndex],
+        ...eventData,
+        updatedAt: new Date().toISOString()
+      };
+      
+      return dataStore.events[eventIndex];
+    },
+    
+    // Admin only: Delete event
+    delete: async (id) => {
+      await new Promise(resolve => setTimeout(resolve, 700));
+      const eventIndex = dataStore.events.findIndex(e => e.id === id);
+      if (eventIndex === -1) {
+        throw new Error('Event not found');
+      }
+      
+      const deletedEvent = dataStore.events[eventIndex];
+      dataStore.events.splice(eventIndex, 1);
+      return deletedEvent;
+    },
+    
+    // Public: Register for event
     register: async (eventId, data) => {
       await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      // Update registration count
+      const eventIndex = dataStore.events.findIndex(e => e.id === eventId);
+      if (eventIndex !== -1) {
+        dataStore.events[eventIndex].registrations++;
+        dataStore.events[eventIndex].updatedAt = new Date().toISOString();
+      }
+      
       return {
         id: 'reg_' + Math.random().toString(36).substr(2, 9),
         eventId,
@@ -629,6 +717,10 @@ export const DashboardPage = () => {
 
 export const EventsListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  
+  const queryClient = useQueryClient();
   const { data: eventsData, isLoading } = useQuery({
     queryKey: ['events', searchTerm],
     queryFn: () => api.events.getAll({ search: searchTerm })
@@ -636,6 +728,27 @@ export const EventsListPage = () => {
 
   const { user } = useAuthStore();
   const canEdit = user?.role === 'admin' || user?.role === 'editor';
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: api.events.delete,
+    onSuccess: () => {
+      // Invalidate all event-related queries to update both admin and public views
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-events'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+    }
+  });
+
+  const handleDelete = async (eventId) => {
+    if (window.confirm('Er du sikker på at du vil slette dette arrangementet?')) {
+      try {
+        await deleteMutation.mutateAsync(eventId);
+      } catch (error) {
+        console.error('Failed to delete event:', error);
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -657,7 +770,7 @@ export const EventsListPage = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Arrangementer</h1>
         {canEdit && (
-          <Button>
+          <Button onClick={() => setShowCreateModal(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Nytt arrangement
           </Button>
@@ -756,10 +869,19 @@ export const EventsListPage = () => {
                       <div className="flex items-center justify-end space-x-2">
                         {canEdit && (
                           <>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setEditingEvent(event)}
+                            >
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDelete(event.id)}
+                              disabled={deleteMutation.isPending}
+                            >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </>
@@ -773,6 +895,270 @@ export const EventsListPage = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Create/Edit Event Modal */}
+      {(showCreateModal || editingEvent) && (
+        <EventModal
+          event={editingEvent}
+          isOpen={showCreateModal || !!editingEvent}
+          onClose={() => {
+            setShowCreateModal(false);
+            setEditingEvent(null);
+          }}
+          onSave={() => {
+            // Invalidate queries to refresh both admin and public views
+            queryClient.invalidateQueries({ queryKey: ['events'] });
+            queryClient.invalidateQueries({ queryKey: ['upcoming-events'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+// Event Create/Edit Modal Component
+const EventModal = ({ event, isOpen, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    startAt: '',
+    endAt: '',
+    location: {
+      venue: '',
+      address: '',
+      city: '',
+      country: 'NO'
+    },
+    capacity: 100,
+    category: 'Seminar',
+    status: 'open',
+    ticketTypes: [
+      { name: 'Standard', price: 0, currency: 'NOK' }
+    ]
+  });
+
+  const createMutation = useMutation({
+    mutationFn: api.events.create,
+    onSuccess: () => {
+      onSave();
+      onClose();
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, ...data }) => api.events.update(id, data),
+    onSuccess: () => {
+      onSave();
+      onClose();
+    }
+  });
+
+  // Initialize form with event data when editing
+  useEffect(() => {
+    if (event) {
+      setFormData({
+        title: event.title || '',
+        description: event.description || '',
+        startAt: event.startAt ? event.startAt.slice(0, 16) : '',
+        endAt: event.endAt ? event.endAt.slice(0, 16) : '',
+        location: {
+          venue: event.location?.venue || '',
+          address: event.location?.address || '',
+          city: event.location?.city || '',
+          country: event.location?.country || 'NO'
+        },
+        capacity: event.capacity || 100,
+        category: event.category || 'Seminar',
+        status: event.status || 'open',
+        ticketTypes: event.ticketTypes || [
+          { name: 'Standard', price: 0, currency: 'NOK' }
+        ]
+      });
+    }
+  }, [event]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    const eventData = {
+      ...formData,
+      startAt: new Date(formData.startAt).toISOString(),
+      endAt: new Date(formData.endAt).toISOString(),
+      capacity: parseInt(formData.capacity)
+    };
+
+    try {
+      if (event) {
+        await updateMutation.mutateAsync({ id: event.id, ...eventData });
+      } else {
+        await createMutation.mutateAsync(eventData);
+      }
+    } catch (error) {
+      console.error('Failed to save event:', error);
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    if (field.startsWith('location.')) {
+      const locationField = field.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        location: {
+          ...prev.location,
+          [locationField]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">
+            {event ? 'Rediger arrangement' : 'Nytt arrangement'}
+          </h2>
+          <Button variant="ghost" onClick={onClose}>
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="title">Tittel *</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="description">Beskrivelse *</Label>
+            <textarea
+              id="description"
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="startAt">Start *</Label>
+              <Input
+                id="startAt"
+                type="datetime-local"
+                value={formData.startAt}
+                onChange={(e) => handleInputChange('startAt', e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="endAt">Slutt *</Label>
+              <Input
+                id="endAt"
+                type="datetime-local"
+                value={formData.endAt}
+                onChange={(e) => handleInputChange('endAt', e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="venue">Sted *</Label>
+              <Input
+                id="venue"
+                value={formData.location.venue}
+                onChange={(e) => handleInputChange('location.venue', e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="city">By *</Label>
+              <Input
+                id="city"
+                value={formData.location.city}
+                onChange={(e) => handleInputChange('location.city', e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="address">Adresse</Label>
+            <Input
+              id="address"
+              value={formData.location.address}
+              onChange={(e) => handleInputChange('location.address', e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="capacity">Kapasitet *</Label>
+              <Input
+                id="capacity"
+                type="number"
+                min="1"
+                value={formData.capacity}
+                onChange={(e) => handleInputChange('capacity', e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="category">Kategori *</Label>
+              <select
+                id="category"
+                className="w-full h-10 px-3 border border-gray-300 rounded-md"
+                value={formData.category}
+                onChange={(e) => handleInputChange('category', e.target.value)}
+              >
+                <option value="Seminar">Seminar</option>
+                <option value="Konferanse">Konferanse</option>
+                <option value="Workshop">Workshop</option>
+                <option value="Nettverksarrangement">Nettverksarrangement</option>
+                <option value="Kurs">Kurs</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="status">Status *</Label>
+              <select
+                id="status"
+                className="w-full h-10 px-3 border border-gray-300 rounded-md"
+                value={formData.status}
+                onChange={(e) => handleInputChange('status', e.target.value)}
+              >
+                <option value="open">Åpen</option>
+                <option value="closed">Stengt</option>
+                <option value="cancelled">Avlyst</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Avbryt
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={createMutation.isPending || updateMutation.isPending}
+            >
+              {createMutation.isPending || updateMutation.isPending ? 'Lagrer...' : 'Lagre'}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
@@ -956,9 +1342,15 @@ export const EventSignupPage = () => {
     queryFn: () => api.events.getById(id)
   });
 
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: (data) => api.events.register(id, data),
     onSuccess: (registration) => {
+      // Invalidate queries to update registration counts across admin and public views
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['event', id] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-events'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       navigate(`/kvittering/${registration.id}`);
     },
     onError: (error) => {

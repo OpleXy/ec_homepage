@@ -36,7 +36,7 @@ src
 3 directories, 7 files
 
 Line Counts Per File:
-1333 src/components/main.jsx
+1725 src/components/main.jsx
 1317 src/components/public.jsx
 519 src/App.css
 481 src/styles/main.css
